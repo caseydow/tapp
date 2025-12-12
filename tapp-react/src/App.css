@@ -1,0 +1,193 @@
+/* src/App.css */
+
+/* Import the font used in the game canvas */
+@font-face {
+  font-family: 'Big Shoulders Display';
+  src: url("./assets/BigShouldersDisplay.ttf");
+  font-display: swap;
+}
+
+body {
+  margin: 0;
+  /* Reverting to standard font for the page to match original HTML look */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  background-color: #ffffff; /* Original page background */
+  overflow-x: hidden;
+}
+
+/* --- Layout Classes (Mimicking original layout structure) --- */
+.game-section {
+  padding-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.threefourth {
+  width: 75%;
+  height: 80vh;
+  position: relative;
+}
+
+.fourth {
+  width: 25%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 600px) {
+  .fourth {
+    height: 80vh;
+  }
+}
+
+@media (max-width: 599px) {
+  .game-section {
+    flex-direction: column;
+  }
+  .threefourth {
+    width: 100%;
+    height: 60vh;
+  }
+  .fourth {
+    width: 100%;
+    height: 20vh;
+    padding-top: 20px;
+  }
+}
+
+/* --- LOG STYLING (Restored from tapp.css) --- */
+log {
+  display: block;
+  border: 3px solid black;
+  background-color: white;
+  padding: 10px;
+  height: 100%;
+  width: 100%;
+  overflow-y: scroll;
+  box-sizing: border-box;
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 1.2rem;
+}
+
+/* --- ANIMATIONS (Restored from tapp.css) --- */
+.arrow {
+  border: solid black;
+  border-width: 0 3px 3px 0;
+  display: inline-block;
+  padding: 6px;
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+  margin-bottom: 4px;
+}
+
+.rotate-down {
+  animation: rotate-down 0.3s ease-in-out forwards;
+}
+
+.rotate-right {
+  animation: rotate-right 0.3s ease-in-out forwards;
+}
+
+@keyframes rotate-down {
+  0%   {transform: rotate(-45deg)}
+  100% {transform: rotate(45deg)}
+}
+
+@keyframes rotate-right {
+  0%   {transform: rotate(45deg)}
+  100% {transform: rotate(-45deg)}
+}
+
+.expand {
+  display: block;
+  overflow: hidden;
+  animation: expand 0.5s ease-in-out forwards;
+}
+
+.contract {
+  display: block;
+  overflow: hidden;
+  animation: contract 0.5s ease-in-out forwards;
+}
+
+@keyframes expand {
+  0%   {max-height: 0em}
+  100% {max-height: 100em}
+}
+
+@keyframes contract {
+  0%   {max-height: 100em}
+  100% {max-height: 0}
+}
+
+/* --- UI Overlay Helper Classes --- */
+.overlay-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.screen {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  pointer-events: auto;
+  border: 3px solid #000;
+}
+
+/* Specific Font Application for Game UI Screens */
+.screen.menu, .screen.class-select {
+  font-family: 'Big Shoulders Display', sans-serif;
+}
+
+.screen.menu { background-color: #64c8dc; display: flex; align-items: center; justify-content: center; }
+.screen.class-select { background-color: #64c8dc; }
+
+/* Menu Box Style */
+.menu-box {
+  background-color: #c8f0ff;
+  border: 4px solid #000;
+  padding: 40px;
+  width: 50%;
+  text-align: center;
+  box-shadow: 10px 10px 0 #000;
+}
+
+/* General Input Reset for React UI */
+input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #000;
+  font-family: inherit;
+  font-size: 2rem;
+  text-align: center;
+  margin: 20px 0;
+}
+input:focus { outline: none; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button {
+  background: #fff;
+  border: 2px solid #000;
+  font-family: inherit;
+  font-size: 1.5rem;
+  padding: 10px 30px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #000;
+}
+button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
+
+/* --- Text Content Styling --- */
+section article { width: 100%; }
+section article h1 { font-size: 3rem; margin-bottom: 0.5rem; }
+section article h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+section article p { font-size: 1.1rem; line-height: 1.4; }
