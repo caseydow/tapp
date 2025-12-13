@@ -5,7 +5,20 @@ import { v4 as uuidv4 } from 'uuid';
 import { GameState, Player, Card } from '../game/Core';
 import { TYPES, RARTS } from '../constants';
 
-const myUUID = uuidv4();
+// Helper to persist UUID across reloads
+const getUUID = () => {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+        let id = window.sessionStorage.getItem('tapp_uuid');
+        if (!id) {
+            id = uuidv4();
+            window.sessionStorage.setItem('tapp_uuid', id);
+        }
+        return id;
+    }
+    return uuidv4();
+};
+
+const myUUID = getUUID();
 
 const pubnub = new PubNub({
   publishKey: "pub-c-6d5bcb69-9b5e-4028-8d71-16d663175bc2",
@@ -21,7 +34,7 @@ export const useGameEngine = () => {
   const gameRef = useRef(new GameState(() => setRenderTrigger(t => t + 1)));
 
   useEffect(() => {
-    const messageListener = {
+    const listener = {
       message: (event) => {
         const msg = event.message;
 
@@ -41,7 +54,9 @@ export const useGameEngine = () => {
              gameRef.current.players[idx].online = true;
              gameRef.current.players[idx].joined = true; 
              gameRef.current.players[idx].uuid = uuid;
-             gameRef.current.log(`Player ${idx+1} joined the game.`);
+             
+             const count = gameRef.current.players.filter(p => p.online).length;
+             gameRef.current.log(`Player ${idx+1} joined the game. (${count}/${gameRef.current.players.length})`);
              
              if (uuid === myUUID) {
                 gameRef.current.hand = idx;
@@ -65,16 +80,32 @@ export const useGameEngine = () => {
             if (p) {
                 p.online = false;
                 p.uuid = null;
-                gameRef.current.log(`${p.name} left the game.`);
+                const count = gameRef.current.players.filter(pl => pl.online).length;
+                gameRef.current.log(`${p.name} left the game. (${count}/${gameRef.current.players.length})`);
             }
         } else {
            gameRef.current.processMessage(msg);
         }
+      },
+      // Presence listener handles detecting when other users disconnect/leave
+      presence: (event) => {
+        if (event.action === "leave" && event.subscribedChannel.includes("-JL")) {
+           const id = gameRef.current.gameId;
+           // If a player disconnects, publish a 'Leve' message so all clients update state
+           if(id) {
+               pubnub.publish({
+                   channel: "TP-JL" + id,
+                   message: "Leve" + event.uuid
+               }, (status) => {
+                   if (status.error) console.log(status);
+               });
+           }
+        }
       }
     };
 
-    pubnub.addListener(messageListener);
-    return () => { pubnub.removeListener(messageListener); };
+    pubnub.addListener(listener);
+    return () => { pubnub.removeListener(listener); };
   }, []);
 
   const setUpGame = (dataStr) => {
@@ -121,8 +152,6 @@ export const useGameEngine = () => {
 
   const checkHistory = async (channel, id) => {
       try {
-          // Fetch history (reverse=true means oldest first in PubNub SDK usually, 
-          // but strict tapp.js implementation iterated them to reconstruct state).
           const history = await pubnub.history({
               channel: channel,
               count: 100,
@@ -132,7 +161,6 @@ export const useGameEngine = () => {
           const msgs = history.messages;
 
           // 1. First Pass: Look for Game Setup (TP)
-          // We MUST ensure players exist before processing Joins.
           for (let i = 0; i < msgs.length; i++) {
               const entry = msgs[i].entry;
               if (entry.startsWith("TP") && !entry.startsWith("TP-JL")) {
@@ -142,7 +170,7 @@ export const useGameEngine = () => {
               }
           }
 
-          // 2. Second Pass: Process Joins and existing state
+          // 2. Second Pass: Process Joins, Leaves, and existing state
           for (let i = 0; i < msgs.length; i++) {
               const entry = msgs[i].entry;
               if (entry.startsWith("Join")) {
@@ -150,32 +178,61 @@ export const useGameEngine = () => {
                   const idx = parseInt(parts[0]);
                   const uuid = parts[1]?.trim();
                   if (gameRef.current.players[idx]) {
-                      gameRef.current.players[idx].online = true;
-                      gameRef.current.players[idx].joined = true;
-                      gameRef.current.players[idx].uuid = uuid;
+                      const p = gameRef.current.players[idx];
+                      p.online = true;
+                      p.joined = true;
+                      p.uuid = uuid;
+
+                      const count = gameRef.current.players.filter(pl => pl.online).length;
+                      gameRef.current.log(`Player ${idx + 1} joined the game. (${count}/${gameRef.current.players.length})`);
+                  }
+              } else if (entry.startsWith("Leve")) {
+                  const uuid = entry.slice(4);
+                  const p = gameRef.current.players.find(pl => pl.uuid === uuid);
+                  if (p) {
+                      p.online = false;
+                      p.uuid = null;
+                      
+                      const count = gameRef.current.players.filter(pl => pl.online).length;
+                      gameRef.current.log(`${p.name} left the game. (${count}/${gameRef.current.players.length})`);
                   }
               } else if (entry.startsWith("User")) {
                   gameRef.current.processMessage(entry);
               }
           }
 
-          let hand = 0;
+          // 3. Determine My Seat
+          let hand = -1;
           const players = gameRef.current.players;
+
+          // A. RECOVERY: Check if my UUID is already in the game (handling reloads)
           for (let i = 0; i < players.length; i++) {
-             if (players[i].joined) hand++;
+             if (players[i].uuid === myUUID) {
+                 hand = i;
+                 break;
+             }
           }
-          
-          if (hand === players.length) {
-              hand = -1;
+
+          // B. NEW JOIN: If no existing seat found, find the next open one
+          if (hand === -1) {
+              hand = 0;
               for (let i = 0; i < players.length; i++) {
-                  if (!players[i].online) {
-                      hand = i;
-                      break;
-                  }
+                 if (players[i].joined) hand++;
               }
-              if (hand === -1) {
-                  alert("Game is full!");
-                  return;
+              
+              if (hand === players.length) {
+                  // C. REPLACEMENT: If full, check for offline players to replace
+                  hand = -1;
+                  for (let i = 0; i < players.length; i++) {
+                      if (!players[i].online) {
+                          hand = i;
+                          break;
+                      }
+                  }
+                  if (hand === -1) {
+                      alert("Game is full!");
+                      return;
+                  }
               }
           }
 
@@ -184,7 +241,9 @@ export const useGameEngine = () => {
                h.messages.forEach(m => gameRef.current.processMessage(m.entry));
           });
 
-          // 5. Publish Join
+          setRenderTrigger(t => t + 1);
+
+          // 5. Publish Join (Confirming presence)
           pubnub.publish({
               channel: "TP-JL" + id,
               message: `Join${hand};${myUUID}`

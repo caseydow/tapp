@@ -45,30 +45,34 @@ export const ClassSelector = ({ onConfirm }) => {
   const [abilityChoice, setAbilityChoice] = useState(0); // 0, 1, or 2 (Empowered)
   const [bonusToken, setBonusToken] = useState(0);
 
-  // Stats Logic from tapp.js
-  const baseAttack = CLASS_BUFFS[0][selectedClass];
-  const finalAttack = baseAttack + attackMod;
-  
-  const baseArmor = CLASS_BUFFS[1][selectedClass];
-  const finalArmor = 2 - attackMod + baseArmor;
-  
-  const baseSpeed = CLASS_BUFFS[2][selectedClass];
-  const finalSpeed = 30 - Math.abs(attackMod) * 15 + baseSpeed;
-
+  // Helper to get current ability name string (e.g., "Castle Armory")
   const getAbilityName = () => {
       if(abilityChoice === 2) return "Empowered Strikes";
       return ABILITIES[selectedClass][abilityChoice].split(":")[0];
   };
 
+  const currentAbility = getAbilityName();
+
+  // Stats Logic from tapp.js (Updated to include passive ability buffs)
+  const baseAttack = CLASS_BUFFS[0][selectedClass];
+  let finalAttack = baseAttack + attackMod;
+  if (currentAbility === "Overconfidence") finalAttack += 2; // Warlock Passive
+  
+  const baseArmor = CLASS_BUFFS[1][selectedClass];
+  let finalArmor = 2 - attackMod + baseArmor;
+  if (currentAbility === "Castle Armory") finalArmor += 1; // Knight Passive
+  
+  const baseSpeed = CLASS_BUFFS[2][selectedClass];
+  const finalSpeed = 30 - Math.abs(attackMod) * 15 + baseSpeed;
+
   const handleConfirm = () => {
-    let abilityStr = getAbilityName();
     onConfirm({
         name: name || "Player",
         classIndex: selectedClass,
         armor: finalArmor,
         speed: finalSpeed,
         attack: finalAttack,
-        ability: abilityStr,
+        ability: currentAbility,
         bonusToken: (selectedClass === 1 && abilityChoice === 0) ? bonusToken : null
     });
   };
@@ -77,10 +81,8 @@ export const ClassSelector = ({ onConfirm }) => {
     <div className="screen class-select" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
       
       {/* --- CLASS COLUMN --- */}
-      {/* Rect(width/5, height*0.52, width/5, height*0.55) -> Center(20%, 52%), Size(20%, 55%) */}
-      {/* Header at width*0.2, height*0.16 -> 20%, 16% */}
       <div style={{ position: 'absolute', left: '20%', top: '16%', width: '20%', height: '14%', backgroundColor: '#c8f0ff', border: '3px solid #000', transform: 'translate(-50%, -50%)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <span style={{ fontSize: '2rem' }}>Class</span>
+          <span style={{ fontSize: 'clamp(1rem, 3vw, 2rem)' }}>Class</span>
       </div>
 
       <TappRect x={20} y={52} w={20} h={55} color="#c8f0ff">
@@ -98,7 +100,8 @@ export const ClassSelector = ({ onConfirm }) => {
               justifyContent: 'center',
               cursor: 'pointer',
               color: selectedClass === i ? '#ff0000' : '#000000',
-              fontSize: '1.5rem'
+              fontSize: 'clamp(0.8rem, 2.5vw, 1.5rem)', 
+              textAlign: 'center'
             }}
           >
             {c}
@@ -107,20 +110,17 @@ export const ClassSelector = ({ onConfirm }) => {
       </TappRect>
 
       {/* --- ATTACK COLUMN --- */}
-      {/* Rect(width*0.4, height*0.52, width/6, height*0.55) -> Center(40%, 52%), Size(16.66%, 55%) */}
-      {/* Header at 40%, 16% */}
       <div style={{ position: 'absolute', left: '40%', top: '16%', width: '16.66%', height: '14%', backgroundColor: '#c8f0ff', border: '3px solid #000', transform: 'translate(-50%, -50%)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <span style={{ fontSize: '2rem' }}>Attack</span>
+          <span style={{ fontSize: 'clamp(1rem, 3vw, 2rem)' }}>Attack</span>
       </div>
 
       <TappRect x={40} y={52} w={16.66} h={55} color="#c8f0ff">
-         {/* In tapp.js: loop i from 2 down to -2. rect(width*0.4, height*(0.52 - i*8/75), width/7, height*0.09) */}
          {[2, 1, 0, -1, -2].map((val) => (
              <div
                 key={val}
                 onClick={() => setAttackMod(val)}
                 style={{
-                    width: '85.7%', // 1/7 relative to 1/6 is ~85%
+                    width: '85.7%', 
                     height: '13%', 
                     backgroundColor: '#ffffff',
                     border: '3px solid #000',
@@ -129,7 +129,7 @@ export const ClassSelector = ({ onConfirm }) => {
                     justifyContent: 'center',
                     cursor: 'pointer',
                     color: attackMod === val ? '#ff0000' : '#000000',
-                    fontSize: '1.5rem'
+                    fontSize: 'clamp(1rem, 3vw, 1.5rem)'
                 }}
              >
                  {val}
@@ -139,14 +139,11 @@ export const ClassSelector = ({ onConfirm }) => {
 
 
       {/* --- ABILITY COLUMN --- */}
-      {/* Rect(width*0.7, height*0.52, width/2.5, height*0.55) -> Center(70%, 52%), Size(40%, 55%) */}
-      {/* Header at 70%, 16% */}
       <div style={{ position: 'absolute', left: '70%', top: '16%', width: '40%', height: '14%', backgroundColor: '#c8f0ff', border: '3px solid #000', transform: 'translate(-50%, -50%)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <span style={{ fontSize: '2rem' }}>Ability</span>
+          <span style={{ fontSize: 'clamp(1rem, 3vw, 2rem)' }}>Ability</span>
       </div>
 
       <TappRect x={70} y={52} w={40} h={55} color="#c8f0ff">
-          {/* Abilities are 0, 1, and 4 (Empowered) */}
           {[ABILITIES[selectedClass][0], ABILITIES[selectedClass][1], ABILITIES[4]].map((txt, i) => (
               <div
                 key={i}
@@ -156,7 +153,7 @@ export const ClassSelector = ({ onConfirm }) => {
                     height: '28%',
                     backgroundColor: '#ffffff',
                     border: '3px solid #000',
-                    padding: '10px',
+                    padding: '5px',
                     boxSizing: 'border-box',
                     display: 'flex',
                     alignItems: 'center',
@@ -164,9 +161,10 @@ export const ClassSelector = ({ onConfirm }) => {
                     textAlign: 'center',
                     cursor: 'pointer',
                     color: abilityChoice === i ? '#ff0000' : '#000000',
-                    fontSize: '1.2rem',
+                    fontSize: 'clamp(0.6rem, 1.4vw, 1.2rem)',
                     whiteSpace: 'pre-wrap',
-                    lineHeight: '1.1'
+                    lineHeight: '1.1',
+                    overflow: 'hidden'
                 }}
               >
                   {txt}
@@ -177,10 +175,9 @@ export const ClassSelector = ({ onConfirm }) => {
       {/* --- MAGICAL QUIVER BONUS (Archer only) --- */}
       {selectedClass === 1 && abilityChoice === 0 && (
           <>
-            <div style={{ position: 'absolute', left: '95%', top: '19.5%', width: '9%', height: '7%', backgroundColor: '#c8f0ff', border: '3px solid #000', transform: 'translate(-50%, -50%)', display:'flex', alignItems:'center', justifyContent:'center', fontSize: '1rem' }}>
+            <div style={{ position: 'absolute', left: '95%', top: '19.5%', width: '9%', height: '7%', backgroundColor: '#c8f0ff', border: '3px solid #000', transform: 'translate(-50%, -50%)', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 'clamp(0.6rem, 1.5vw, 1rem)' }}>
                 Bonus
             </div>
-            {/* 8 Tokens: rect(width*0.95, height*(0.275 + i*0.07), width*0.09, height*0.06) */}
             {TOKEN_NAMES.map((t, i) => (
                 <div
                     key={t}
@@ -202,7 +199,8 @@ export const ClassSelector = ({ onConfirm }) => {
                         backgroundColor: '#fff',
                         color: bonusToken === i ? '#ff0000' : '#000000',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '0.8rem'
+                        fontSize: 'clamp(0.5rem, 1.2vw, 0.8rem)',
+                        overflow: 'hidden'
                     }}>
                         {t}
                     </div>
@@ -221,10 +219,10 @@ export const ClassSelector = ({ onConfirm }) => {
               onChange={(e) => setName(e.target.value)}
               style={{ 
                 width: '90%', 
-                fontSize: '1.5rem', 
+                fontSize: 'clamp(1rem, 2.5vw, 1.5rem)', 
                 borderBottom: '2px solid black', 
                 fontFamily: 'inherit',
-                margin: 0, // FIXED: Remove global margin to center vertically in TappRect
+                margin: 0, 
                 background: 'transparent'
               }}
               placeholder="Name"
@@ -233,10 +231,10 @@ export const ClassSelector = ({ onConfirm }) => {
               
       {/* STATS DISPLAY (Middle Bottom) */}
       <TappRect x={47.5} y={86} w={34} h={10} color="#c8f0ff">
-         <div style={{display:'flex', width:'100%', justifyContent:'space-around', fontSize: '1.5rem'}}>
-             <span>Damage: {finalAttack}</span>
-             <span>Armor: {finalArmor}</span>
-             <span>Speed: {finalSpeed}</span>
+         <div style={{display:'flex', width:'100%', justifyContent:'space-around', fontSize: 'clamp(0.8rem, 2.2vw, 1.5rem)'}}>
+             <span>Dmg: {finalAttack}</span>
+             <span>Arm: {finalArmor}</span>
+             <span>Spd: {finalSpeed}</span>
          </div>
       </TappRect>
 
@@ -256,7 +254,8 @@ export const ClassSelector = ({ onConfirm }) => {
               width: 'calc(100% - 6px)', height: 'calc(100% - 6px)',
               backgroundColor: '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.5rem'
+              fontSize: 'clamp(0.9rem, 2.5vw, 1.5rem)',
+              textAlign: 'center'
           }}>
               Continue as {name}
           </div>
