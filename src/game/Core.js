@@ -1,4 +1,3 @@
-// src/game/Core.js
 import * as C from '../constants';
 
 export function between(point, middle, length) {
@@ -21,9 +20,6 @@ export class Player {
     this.speed = 0;
     this.life = 10;
     this.hand = [];
-    // Tapp.js stores special tokens (Arcane, Mushroom, Recycle) at indices 0, 1, 2.
-    // Index 3 is used for Health Token count logic in tapp.js.
-    // We keep size 8 to map to all tokenNames if needed, but logic relies on 0-3.
     this.tokens = [0, 0, 0, 0, 0, 0, 0, 0]; 
     this.protections = [];
     this.pos = 0;
@@ -78,7 +74,7 @@ export class GameState {
   constructor(updateCallback) {
     this.players = [];
     this.deck = [];
-    this.played = [[], []]; // [0] = Discard Pile, [1] = Shop
+    this.played = [[], []];
     this.hand = -1;
     this.recycle = [-1, 0, 0];
     this.logs = [];
@@ -87,8 +83,7 @@ export class GameState {
     this.screen = 0; 
     this.tempTokens = null;
     
-    // UI Selection States
-    this.clickToken = null; // 0=Arcane, 1=Mushroom, 2=Recycle
+    this.clickToken = null;
     this.selectedCard = null;
     this.clickBig = false;
     this.clickedPlayer = null;
@@ -125,7 +120,6 @@ export class GameState {
       case "1": p.armor += 1; break;
       case "2": p.speed += 20; break;
       case "3": p.health += 10; p.tokens[3] += 1; break;
-      // tapp.js logic maps IDs 4,5,6 to indices 0,1,2 for storage
       case "4": p.tokens[0] += 1; break; 
       case "5": p.tokens[1] += 1; break;
       case "6": p.tokens[2] += 1; break;
@@ -217,7 +211,7 @@ export class GameState {
              } else if(item.includes("RR2")) {
                  player.armor -= parseInt(item.slice(3));
                  toRemove.push(idx);
-             } else if(item.includes("SC1")) { // tapp.js check
+             } else if(item.includes("SC1")) {
                  if(!this.checkBarrier(player) && !this.checkBlock(player)) {
                      player.health -= 4;
                      toRemove.push(idx);
@@ -225,7 +219,6 @@ export class GameState {
              }
           }
       });
-      // Reverse loop to splice safely
       for(let i=toRemove.length-1; i>=0; i--) player.protections.splice(toRemove[i], 1);
       
       if (player.protections.includes("EL")) player.protections.push("ELD");
@@ -621,23 +614,19 @@ export class GameState {
       if (type === "P") { 
         const tNum = parseInt(data[2]);
         if (tNum === 0) { 
-          // Arcane (0): Create duplicate card
           const suit = data[3]; const num = data[4];
           const newCard = new Card(suit, num);
           newCard.dupe = true;
           newCard.grab(pNum, this);
           p.hand.push(newCard);
-          p.tokens[0] -= 1; // Consume Arcane
+          p.tokens[0] -= 1;
         } else if (tNum === 1) { 
-          // Mushroom (1)
           p.health += 20; p.tokens[1] -= 1;
           p.health = Math.min(100 + p.tokens[3] * 10, p.health);
         } else if (tNum === 2) { 
-          // Recycle (2)
           p.tokens[2] -= 1;
           this.recycle = [pNum, 0, 0];
         } else if (tNum === 3) { 
-          // Dodge (3) (Nimble Feet)
           p.health += parseInt(data[3]); 
           p.protections[0] = -1;
         }

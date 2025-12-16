@@ -73,11 +73,10 @@ function App() {
         </article>
       </section>
 
-      {/* Introduction Section */}
       <section style={{ maxWidth: '600px', margin: 'auto', textAlign: 'center', padding: '0 20px' }}>
         <article>
           <h1>TAPP</h1>
-          <h4>TAPP is a game of strategy which focuses on building a unique character and battling opponents over a series of rounds. The wide variety of builds and cards means that every game will always be unique!</h4>
+          <h4>TAPP is a game of strategy which focuses on building a unique character and battling opponents over a series of rounds. Every game is always unique!</h4>
           <p style={{ opacity: '60%' }}>
             <a href="./downloads/cards.zip" download="TAPP Cards" style={{color: 'inherit'}}>Click to Download the Card Designs</a><br/>
             <a href="https://docs.google.com/spreadsheets/d/1Ut25LnsZv1SjcmGxaavKhANNh-YHvjs9GYHRkQPpD0U/edit?usp=sharing" target="_blank" rel="noreferrer" style={{color: 'inherit'}}>Click to View the Game Sheet</a>
@@ -85,14 +84,12 @@ function App() {
         </article>
       </section>
 
-      {/* How to Play Section */}
       <section style={{ marginTop: '20px' }}>
         <article style={{ width: '100%', padding: '0 40px', boxSizing: 'border-box' }}>
           <InfoSection />
         </article>
       </section>
 
-      {/* Development Section */}
       <section style={{ padding: '0 40px' }}>
         <article style={{ width: '100%' }}>
           <h1>Development</h1>

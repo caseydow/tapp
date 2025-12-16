@@ -27,7 +27,7 @@ export const InfoSection = () => {
           - On the character building screen, build a character and type a name.<br/>
           - Click the deck or one of three cards to draw a card.<br/>
           - Click a card in your hand to select it and use the controls on the side to play.<br/>
-          - Right click a card or press space to enlarge a selected card.<br/>
+          - Right click a card to enlarge it.<br/>
           - Click on an opponent's hand or name to view their stats.<br/>
         </p>
         <h3>Building Phase:</h3>

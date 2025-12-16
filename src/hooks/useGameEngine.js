@@ -1,11 +1,9 @@
-// src/hooks/useGameEngine.js
 import { useState, useEffect, useRef } from 'react';
 import PubNub from 'pubnub';
 import { v4 as uuidv4 } from 'uuid';
 import { GameState, Player, Card } from '../game/Core';
 import { TYPES, RARTS } from '../constants';
 
-// Helper to persist UUID across reloads
 const getUUID = () => {
     if (typeof window !== 'undefined' && window.sessionStorage) {
         let id = window.sessionStorage.getItem('tapp_uuid');
@@ -87,11 +85,9 @@ export const useGameEngine = () => {
            gameRef.current.processMessage(msg);
         }
       },
-      // Presence listener handles detecting when other users disconnect/leave
       presence: (event) => {
         if (event.action === "leave" && event.subscribedChannel.includes("-JL")) {
            const id = gameRef.current.gameId;
-           // If a player disconnects, publish a 'Leve' message so all clients update state
            if(id) {
                pubnub.publish({
                    channel: "TP-JL" + id,
@@ -125,7 +121,6 @@ export const useGameEngine = () => {
            if(c[0] && c[1]) newState.deck.push(new Card(c[0], c[1]));
        });
        
-       // EXACT tapp.js dealing logic:
        newState.played = [[], []];
        for(let i=0; i<3; i++) {
            if(newState.deck.length > 0) {
@@ -135,7 +130,6 @@ export const useGameEngine = () => {
            }
        }
        
-       // Deterministic deal
        for (let i = 0; i < newState.players.length; i++) {
           for (let n = 0; n < 5; n++) {
             if (newState.deck.length > 0) {
@@ -160,7 +154,6 @@ export const useGameEngine = () => {
           
           const msgs = history.messages;
 
-          // 1. First Pass: Look for Game Setup (TP)
           for (let i = 0; i < msgs.length; i++) {
               const entry = msgs[i].entry;
               if (entry.startsWith("TP") && !entry.startsWith("TP-JL")) {
@@ -170,7 +163,6 @@ export const useGameEngine = () => {
               }
           }
 
-          // 2. Second Pass: Process Joins, Leaves, and existing state
           for (let i = 0; i < msgs.length; i++) {
               const entry = msgs[i].entry;
               if (entry.startsWith("Join")) {
@@ -201,11 +193,9 @@ export const useGameEngine = () => {
               }
           }
 
-          // 3. Determine My Seat
           let hand = -1;
           const players = gameRef.current.players;
 
-          // A. RECOVERY: Check if my UUID is already in the game (handling reloads)
           for (let i = 0; i < players.length; i++) {
              if (players[i].uuid === myUUID) {
                  hand = i;
@@ -213,7 +203,6 @@ export const useGameEngine = () => {
              }
           }
 
-          // B. NEW JOIN: If no existing seat found, find the next open one
           if (hand === -1) {
               hand = 0;
               for (let i = 0; i < players.length; i++) {
@@ -221,7 +210,6 @@ export const useGameEngine = () => {
               }
               
               if (hand === players.length) {
-                  // C. REPLACEMENT: If full, check for offline players to replace
                   hand = -1;
                   for (let i = 0; i < players.length; i++) {
                       if (!players[i].online) {
@@ -236,14 +224,12 @@ export const useGameEngine = () => {
               }
           }
 
-          // 4. Fetch Game Moves history
           await pubnub.history({ channel: "TP" + id, count: 100, reverse: true }).then(h => {
                h.messages.forEach(m => gameRef.current.processMessage(m.entry));
           });
 
           setRenderTrigger(t => t + 1);
 
-          // 5. Publish Join (Confirming presence)
           pubnub.publish({
               channel: "TP-JL" + id,
               message: `Join${hand};${myUUID}`

@@ -1,11 +1,10 @@
 import React, { useRef, useEffect } from 'react';
-import { COLORS, COLORS_DARK, TOKEN_COLORS, TOKEN_NAMES } from '../constants';
+import { TOKEN_COLORS, TOKEN_NAMES } from '../constants';
 import { Card } from '../game/Core'; 
 
 const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
   const canvasRef = useRef(null);
 
-  // --- Drawing Helpers ---
   const drawRect = (ctx, x, y, across, up, color="#ffffff") => {
     ctx.fillStyle = "#000000";
     ctx.fillRect(x - across / 2, y - up / 2, across, up);
@@ -28,7 +27,6 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
     return middle - length / 2 < point && point < middle + length / 2;
   };
 
-  // --- Logic Helpers ---
   const getVars = (card, playerIdx, aimIdx) => {
     let vars = "";
     let cardID = card.card[0] + card.card[1];
@@ -96,14 +94,12 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
     return vars;
   };
 
-  // --- Interaction Logic ---
   const processInteraction = (e, isRightClick) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const rawX = e.clientX - rect.left;
     const rawY = e.clientY - rect.top;
 
-    // Use Full Resolution Dimensions
     const width = rect.width;
     const height = rect.height;
     const x = rawX;
@@ -115,7 +111,6 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
     if (!isRightClick && gameStateObj.clickBig) gameStateObj.clickBig = false;
     if(gameStateObj.clickedPlayer) gameStateObj.clickedPlayer = null;
 
-    // Screen 1: Tokens (Selection on Shuffle)
     if (gameStateObj.screen === 1 && gameStateObj.tempTokens) {
         for(let i=0; i<3; i++) {
            if (between(x, width * 0.45, width * 0.3) && 
@@ -126,7 +121,6 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
         return;
     }
 
-    // Screen 2: Bounty
     if (gameStateObj.screen === 2) {
         let nullCount = 0;
         gameStateObj.deck.forEach(c => { if(c===null) nullCount++; });
@@ -139,9 +133,6 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
         return;
     }
 
-    // Screen 0: Main Game
-    
-    // 1. Click Tokens to Toggle Selection
     if (between(x, 59 * width / 64, 3 * width / 32)) {
       for (let i = 0; i < 3; i++) {
         if (between(y, height * (7 + i) / 15 + height/320, height / 20)) {
@@ -153,7 +144,6 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
       }
     }
 
-    // 2. Click Hand Cards
     let checkList = [];
     if (gameStateObj.selectedCard) checkList.push(gameStateObj.selectedCard);
     checkList = checkList.concat([...me.hand].reverse());
@@ -176,7 +166,6 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
 
     if (clickedCard) return;
 
-    // 3. Click Opponent Hands / Stats
     if (!isRightClick) {
         gameStateObj.players.forEach((p, i) => {
             if (between(x, 7 * width / 8, width / 4) && between(y, height / 15 * (i + 2), height / 15)) {
@@ -213,14 +202,11 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
 
     if (isRightClick) return; 
 
-    // 4. Buttons
     if (between(x, width * 0.875, width / 6)) {
-        // Play/Use Button
         if (between(y, height / 1.2, height / 12)) {
              if (gameStateObj.recycle[0] > -1) {
                  gameStateObj.log("#000000You may not play while using a Recycle Token!");
              } 
-             // Token Usage
              else if (gameStateObj.clickToken === 1 || gameStateObj.clickToken === 2) {
                  sendAction(`ToknP;${myHandIndex};${gameStateObj.clickToken}`);
                  gameStateObj.clickToken = null;
@@ -249,7 +235,6 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
                  gameStateObj.selectedCard = null;
              }
         }
-        // Discard/Reshuffle Button
         if (between(y, height / 1.4, height / 12)) {
             if (gameStateObj.selectedCard) {
                 if (gameStateObj.recycle[0] > -1 && gameStateObj.recycle[1] >= 3) {
@@ -277,8 +262,6 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
                 for (let i = 0; i < allCards.length; i++) {
                     if (!allCards[i].dupe) msg += allCards[i].card[0] + "," + allCards[i].card[1] + ";";
                 }
-                // REMOVED EXTRA SEMICOLON HERE to match tapp.js protocol
-                // msg += ";"; 
                 for (let i = 0; i < gameStateObj.players.length; i++) {
                     let randTokens = [];
                     while (randTokens.length < 3) {
@@ -292,7 +275,6 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
         }
     }
     
-    // 5. Shop & Deck
     for(let i=0; i<3; i++) {
         const cx = (14 + i * 9) * width / 72;
         if(between(x, cx, width/9) && between(y, 31*height/64, height/4.5)) {
@@ -325,17 +307,13 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
       const rect = canvas.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
       
-      // Set Actual Pixel Dimensions
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
       
-      // Normalize Coordinate System
       ctx.scale(dpr, dpr);
       
-      // Ensure Sharp Images
       ctx.imageSmoothingEnabled = false;
 
-      // Use Full Width/Height for logic
       const width = rect.width;
       const height = rect.height;
       
@@ -343,7 +321,6 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
 
       drawRect(ctx, width/2, height/2, width, height, "#dcdcdc");
 
-      // --- INFO PANEL ---
       drawRect(ctx, 7 * width / 8, height / 2, width / 4, height);
       drawText(ctx, gameStateObj.gameId ? gameStateObj.gameId : "ID: ???", 7 * width / 8, height * 15 / 16, fontSize / 15);
       drawText(ctx, `Deck: ${gameStateObj.deck.length}`, 7 * width / 8, height / 15, fontSize / 20);
@@ -362,7 +339,6 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
         drawText(ctx, `Arm: ${me.armor}`, 13 * width / 16, height * 8 / 15 + fontSize/80, fontSize/20);
         drawText(ctx, `Spd: ${me.speed}`, 13 * width / 16, height * 3 / 5 + fontSize/80, fontSize/20);
         
-        // Render Tokens
         ["Arcane: ", "Mush: ", "Recyc: "].forEach((name, i) => {
            let color = (gameStateObj.clickToken === i) ? "#ff0000" : "#000000"; 
            drawText(ctx, name + me.tokens[i], 59 * width / 64, height * (7 + i) / 15, fontSize/20, color);
@@ -394,10 +370,9 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
         drawText(ctx, gameStateObj.selectedCard ? "Discard" : "Reshuffle", width * 0.875, height / 1.4, fontSize/20, "#ffffff");
       }
 
-      // --- SCREEN SPECIFIC ---
-      if (gameStateObj.screen === 1) { // Tokens
+      if (gameStateObj.screen === 1) {
           drawRect(ctx, 3 * width / 8, height / 2, width / 2, height / 2, "#f0f0f0");
-          drawText(ctx, "Select Token", width * 0.2125, height / 2, fontSize / 8);
+          drawText(ctx, "Select\nToken", width * 0.2125, height / 2, fontSize / 8);
           if(gameStateObj.tempTokens) {
               gameStateObj.tempTokens.forEach((t, i) => {
                  const tIdx = parseInt(t);
@@ -406,7 +381,7 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
               });
           }
       } 
-      else if (gameStateObj.screen === 2) { // Bounty
+      else if (gameStateObj.screen === 2) {
           let nullCount = 0;
           gameStateObj.deck.forEach(c => { if(c===null) nullCount++; });
           const me = gameStateObj.players[myHandIndex];
@@ -426,7 +401,7 @@ const GameCanvas = ({ gameStateObj, myHandIndex, sendAction }) => {
               }
           });
       }
-      else { // Game Board
+      else { 
           if(gameStateObj.deck.length > 0) ctx.drawImage(deckImg, width / 4, height / 4, width / 9, height / 4.5);
           if (gameStateObj.played[0].length > 0) ctx.drawImage(gameStateObj.played[0][0].image, 7 * width / 18, height / 4, width / 9, height / 4.5);
           else ctx.drawImage(blankImg, 7 * width / 18, height / 4, width / 9, height / 4.5);

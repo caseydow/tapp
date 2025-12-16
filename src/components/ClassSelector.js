@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { CLASSES, ABILITIES, COLORS, CLASS_BUFFS, TOKEN_NAMES } from '../constants';
 
-// Helper for exact tapp.js rect styling: Black bg with slightly smaller colored inner rect
 const TappRect = ({ x, y, w, h, color, children, style }) => {
   return (
     <div
@@ -12,7 +11,7 @@ const TappRect = ({ x, y, w, h, color, children, style }) => {
         width: `${w}%`,
         height: `${h}%`,
         backgroundColor: '#000000',
-        transform: 'translate(-50%, -50%)', // Center based coordinates
+        transform: 'translate(-50%, -50%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -27,7 +26,7 @@ const TappRect = ({ x, y, w, h, color, children, style }) => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'space-evenly', // Distribute items vertically
+          justifyContent: 'space-evenly',
           overflow: 'hidden',
           position: 'relative'
         }}
@@ -41,11 +40,10 @@ const TappRect = ({ x, y, w, h, color, children, style }) => {
 export const ClassSelector = ({ onConfirm }) => {
   const [selectedClass, setSelectedClass] = useState(0);
   const [name, setName] = useState('Player');
-  const [attackMod, setAttackMod] = useState(0); // -2 to 2
-  const [abilityChoice, setAbilityChoice] = useState(0); // 0, 1, or 2 (Empowered)
+  const [attackMod, setAttackMod] = useState(0);
+  const [abilityChoice, setAbilityChoice] = useState(0);
   const [bonusToken, setBonusToken] = useState(0);
 
-  // Helper to get current ability name string (e.g., "Castle Armory")
   const getAbilityName = () => {
       if(abilityChoice === 2) return "Empowered Strikes";
       return ABILITIES[selectedClass][abilityChoice].split(":")[0];
@@ -53,14 +51,13 @@ export const ClassSelector = ({ onConfirm }) => {
 
   const currentAbility = getAbilityName();
 
-  // Stats Logic from tapp.js (Updated to include passive ability buffs)
   const baseAttack = CLASS_BUFFS[0][selectedClass];
   let finalAttack = baseAttack + attackMod;
-  if (currentAbility === "Overconfidence") finalAttack += 2; // Warlock Passive
+  if (currentAbility === "Overconfidence") finalAttack += 2;
   
   const baseArmor = CLASS_BUFFS[1][selectedClass];
   let finalArmor = 2 - attackMod + baseArmor;
-  if (currentAbility === "Castle Armory") finalArmor += 1; // Knight Passive
+  if (currentAbility === "Castle Armory") finalArmor += 1;
   
   const baseSpeed = CLASS_BUFFS[2][selectedClass];
   const finalSpeed = 30 - Math.abs(attackMod) * 15 + baseSpeed;
@@ -80,7 +77,6 @@ export const ClassSelector = ({ onConfirm }) => {
   return (
     <div className="screen class-select" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
       
-      {/* --- CLASS COLUMN --- */}
       <div style={{ position: 'absolute', left: '20%', top: '16%', width: '20%', height: '14%', backgroundColor: '#c8f0ff', border: '3px solid #000', transform: 'translate(-50%, -50%)', display:'flex', alignItems:'center', justifyContent:'center' }}>
           <span style={{ fontSize: 'clamp(1rem, 3vw, 2rem)' }}>Class</span>
       </div>
@@ -109,7 +105,6 @@ export const ClassSelector = ({ onConfirm }) => {
         ))}
       </TappRect>
 
-      {/* --- ATTACK COLUMN --- */}
       <div style={{ position: 'absolute', left: '40%', top: '16%', width: '16.66%', height: '14%', backgroundColor: '#c8f0ff', border: '3px solid #000', transform: 'translate(-50%, -50%)', display:'flex', alignItems:'center', justifyContent:'center' }}>
           <span style={{ fontSize: 'clamp(1rem, 3vw, 2rem)' }}>Attack</span>
       </div>
@@ -138,7 +133,6 @@ export const ClassSelector = ({ onConfirm }) => {
       </TappRect>
 
 
-      {/* --- ABILITY COLUMN --- */}
       <div style={{ position: 'absolute', left: '70%', top: '16%', width: '40%', height: '14%', backgroundColor: '#c8f0ff', border: '3px solid #000', transform: 'translate(-50%, -50%)', display:'flex', alignItems:'center', justifyContent:'center' }}>
           <span style={{ fontSize: 'clamp(1rem, 3vw, 2rem)' }}>Ability</span>
       </div>
@@ -172,7 +166,6 @@ export const ClassSelector = ({ onConfirm }) => {
           ))}
       </TappRect>
 
-      {/* --- MAGICAL QUIVER BONUS (Archer only) --- */}
       {selectedClass === 1 && abilityChoice === 0 && (
           <>
             <div style={{ position: 'absolute', left: '95%', top: '19.5%', width: '9%', height: '7%', backgroundColor: '#c8f0ff', border: '3px solid #000', transform: 'translate(-50%, -50%)', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 'clamp(0.6rem, 1.5vw, 1rem)' }}>
@@ -188,7 +181,7 @@ export const ClassSelector = ({ onConfirm }) => {
                         top: `${27.5 + i * 7}%`,
                         width: '9%',
                         height: '6%',
-                        backgroundColor: '#000', // Border hack
+                        backgroundColor: '#000',
                         transform: 'translate(-50%, -50%)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         cursor: 'pointer'
@@ -210,9 +203,6 @@ export const ClassSelector = ({ onConfirm }) => {
       )}
 
 
-      {/* --- BOTTOM SECTION --- */}
-      
-      {/* NAME INPUT (Left Bottom) */}
       <TappRect x={20} y={86} w={20} h={10} color="#c8f0ff">
            <input 
               value={name}
@@ -229,7 +219,6 @@ export const ClassSelector = ({ onConfirm }) => {
            />
         </TappRect>
               
-      {/* STATS DISPLAY (Middle Bottom) */}
       <TappRect x={47.5} y={86} w={34} h={10} color="#c8f0ff">
          <div style={{display:'flex', width:'100%', justifyContent:'space-around', fontSize: 'clamp(0.8rem, 2.2vw, 1.5rem)'}}>
              <span>Dmg: {finalAttack}</span>
@@ -238,7 +227,6 @@ export const ClassSelector = ({ onConfirm }) => {
          </div>
       </TappRect>
 
-      {/* CONTINUE BUTTON (Right Bottom) */}
       <div 
         onClick={handleConfirm}
         style={{
